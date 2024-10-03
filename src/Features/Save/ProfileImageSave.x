@@ -6,7 +6,7 @@
 %property (nonatomic, strong) JGProgressHUD *hud;
 - (void)viewDidLoad {
     %orig;
-    if ([SCIManager profileImageSave]) {
+    if ([SCIManager getPref:@"save_profile"]) {
         [self addHandleLongPress];
     }
 }

@@ -11,7 +11,7 @@
     NSMutableArray *new_items = [items mutableCopy];
 
     // Messages seen
-    if ([SCIManager hideLastSeen]) {
+    if ([SCIManager getPref:@"remove_lastseen"]) {
         UIBarButtonItem *seenButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"checkmark.message"] style:UIBarButtonItemStylePlain target:self action:@selector(seenButtonHandler:)];
         [new_items addObject:seenButton];
 
@@ -23,7 +23,7 @@
     }
 
     // DM visual messages viewed
-    if ([SCIManager unlimitedReplay]) {
+    if ([SCIManager getPref:@"unlimited_replay"]) {
         UIBarButtonItem *dmVisualMsgsViewedButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"photo.badge.checkmark"] style:UIBarButtonItemStylePlain target:self action:@selector(dmVisualMsgsViewedButtonHandler:)];
         [new_items addObject:dmVisualMsgsViewedButton];
 
@@ -62,11 +62,12 @@
 // Messages seen logic
 %hook IGDirectThreadViewListAdapterDataSource
 - (BOOL)shouldUpdateLastSeenMessage {
-    if ([SCIManager hideLastSeen]) {
+    if ([SCIManager getPref:@"remove_lastseen"]) {
         // Check if messages should be shown as seen
         if (seenButtonEnabled) {
             return %orig;
         }
+        
         return false;
     }
     
@@ -77,7 +78,7 @@
 // DM stories viewed logic
 %hook IGStoryPhotoView
 - (void)progressImageView:(id)arg1 didLoadImage:(id)arg2 loadSource:(id)arg3 networkRequestSummary:(id)arg4 {
-    if ([SCIManager unlimitedReplay]) {
+    if ([SCIManager getPref:@"unlimited_replay"]) {
         // Check if dm stories should be marked as viewed
         if (dmVisualMsgsViewedButtonEnabled) {}
         else return;

@@ -2,100 +2,11 @@
 #import "InstagramHeaders.h"
 
 @implementation SCIManager
-+ (BOOL)hideAds {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_ads"];
-}
-+ (BOOL)hideStoriesTray {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_stories_tray"];
-}
-+ (BOOL)downloadMedia {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"dw_videos"];
-}
-+ (BOOL)profileImageSave {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"save_profile"];
-}
-+ (BOOL)removeSuggestedPost {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_post"];
-}
-+ (BOOL)removeSuggestedAccounts {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_account"];
-}
-+ (BOOL)removeSuggestedReels {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_reels"];
-}
-+ (BOOL)removeSuggestedThreads {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_threads"];
-}
-+ (BOOL)postLikeConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"like_confirm"];
-}
-+ (BOOL)reelsLikeConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"like_confirm_reels"];
-}
-+ (BOOL)followConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"follow_confirm"];
-}
-+ (BOOL)callConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"call_confirm"];
-}
-+ (BOOL)voiceMessageConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"voice_message_confirm"];
-}
-+ (BOOL)stickerInteractConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"sticker_interact_confirm"];
-}
-+ (BOOL)postCommentConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"post_comment_confirm"];
-}
-+ (BOOL)changeDirectThemeConfirmation {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"change_direct_theme_confirm"];
-}
-+ (BOOL)copyDecription {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"copy_description"];
-}
-+ (BOOL)hideReelsTab {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_reels_tab"];
-}
-+ (BOOL)noRecentSearches {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_recent_searches"];
-}
-+ (BOOL)hideExploreGrid {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_explore_grid"];
-}
-+ (BOOL)hideTrendingSearches {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_trending_searches"];
-}
-+ (BOOL)noSuggestedChats {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_chats"];
-}
-+ (BOOL)noSuggestedUsers {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_suggested_users"];
-}
-+ (BOOL)hideMetaAI {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"hide_meta_ai"];
-}
-+ (BOOL)Padlock {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"padlock"];
-}
-+ (BOOL)keepDeletedMessage {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"keep_deleted_message"];
-}
-+ (BOOL)hideLastSeen {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"remove_lastseen"];
-}
-+ (BOOL)noScreenShotAlert {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"remove_screenshot_alert"];
-}
-+ (BOOL)unlimitedReplay {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"unlimited_replay"];
-}
-+ (BOOL)noSeenReceipt {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"no_seen_receipt"];
-}
-+ (BOOL)FLEX {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"flex_instagram"];
-}
++ (BOOL)getPref:(NSString *)key {
+    if (!key) return false;
 
+    return [[NSUserDefaults standardUserDefaults] boolForKey:key];
+}
 
 + (void)cleanCache {
     NSFileManager *fileManager = [NSFileManager defaultManager];

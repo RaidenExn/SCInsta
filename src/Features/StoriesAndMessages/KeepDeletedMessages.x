@@ -3,7 +3,7 @@
 
 %hook IGDirectRealtimeIrisThreadDelta
 + (id)removeItemWithMessageId:(id)arg1 {
-    if ([SCIManager keepDeletedMessage]) {
+    if ([SCIManager getPref:@"keep_deleted_message"]) {
         arg1 = NULL;
     }
 
@@ -13,7 +13,7 @@
 
 %hook IGDirectMessageUpdate
 + (id)removeMessageWithMessageId:(id)arg1{
-    if ([SCIManager keepDeletedMessage]) {
+    if ([SCIManager getPref:@"keep_deleted_message"]) {
         arg1 = NULL;
     }
     

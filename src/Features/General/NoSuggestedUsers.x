@@ -4,7 +4,7 @@
 // "Welcome to instagram" suggested users in feed
 %hook IGSuggestedUnitViewModel
 - (id)initWithAYMFModel:(id)arg1 headerViewModel:(id)arg2 {
-    if ([SCIManager noSuggestedUsers]) {
+    if ([SCIManager getPref:@"no_suggested_users"]) {
         NSLog(@"[SCInsta] Hiding suggested users: main feed welcome section");
 
         return nil;
@@ -15,7 +15,7 @@
 %end
 %hook IGSuggestionsUnitViewModel
 - (id)initWithAYMFModel:(id)arg1 headerViewModel:(id)arg2 {
-    if ([SCIManager noSuggestedUsers]) {
+    if ([SCIManager getPref:@"no_suggested_users"]) {
         NSLog(@"[SCInsta] Hiding suggested users: main feed welcome section");
 
         return nil;

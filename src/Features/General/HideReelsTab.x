@@ -6,7 +6,7 @@
 - (void)didMoveToWindow {
     %orig;
 
-    if ([SCIManager hideReelsTab]) {
+    if ([SCIManager getPref:@"hide_reels_tab"]) {
         NSMutableArray *tabButtons = [self valueForKey:@"_tabButtons"];
 
         NSLog(@"[SCInsta] Hiding reels tab");

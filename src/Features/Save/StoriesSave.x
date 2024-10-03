@@ -9,7 +9,7 @@
 %property (nonatomic, retain) NSString *fileextension;
 - (id)initWithFrame:(CGRect)arg1 shouldCreateComposerBackgroundView:(BOOL)arg2 userSession:(id)arg3 bloksContext:(id)arg4 {
     self = %orig;
-    if ([SCIManager downloadMedia]) {
+    if ([SCIManager getPref:@"dw_videos"]) {
         self.hDownloadButton = [UIButton buttonWithType:UIButtonTypeSystem];
         [self.hDownloadButton addTarget:self action:@selector(hDownloadButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
         [self.hDownloadButton setImage:[UIImage systemImageNamed:@"arrow.down.to.line.circle.fill"] forState:UIControlStateNormal];
@@ -43,7 +43,7 @@
             self.hud.textLabel.text = @"Downloading";
             [self.hud showInView:topMostController().view];
         }]];
-    } else if ([self.mediaView isKindOfClass:%c(IGStoryVideoView)]) {
+    } /* else if ([self.mediaView isKindOfClass:%c(IGStoryVideoView)]) {
         IGVideo *_video = [((IGStoryVideoView *)self.mediaView).videoPlayer valueForKey:@"_video"];
         self.fileextension = @"mp4";
         NSArray *videoURLArray = [_video.allVideoURLs allObjects];
@@ -58,7 +58,7 @@
                 [self.hud showInView:topMostController().view];
             }]];
       }
-    }
+    } */
 
     // !! Currently not working (dunno why and im lazy too fix)
     /* if (self.delegate != nil) {

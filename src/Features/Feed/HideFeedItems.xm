@@ -1,12 +1,12 @@
 #import "../../InstagramHeaders.h"
 #import "../../Manager.h"
 
-static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
+static NSArray *removeItemsInList(NSArray *list, BOOL isFeed) {
     NSMutableArray *orig = [list mutableCopy];
 
     [orig enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         // Remove suggested posts
-        if (isFeed && [SCIManager removeSuggestedPost]) {
+        if (isFeed && [SCIManager getPref:@"no_suggested_post"]) {
             if (
                 ([obj respondsToSelector:@selector(explorePostInFeed)] && [obj performSelector:@selector(explorePostInFeed)])
                 || ([obj isKindOfClass:%c(IGFeedGroupHeaderViewModel)] && [[obj title] isEqualToString:@"Suggested Posts"])
@@ -14,50 +14,86 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
                 NSLog(@"[SCInsta] Removing suggested posts");
 
                 [orig removeObjectAtIndex:idx];
+
+                return;
             }
         }
 
         // Remove suggested reels (carousel)
-        if (isFeed && [SCIManager removeSuggestedReels]) {
+        if (isFeed && [SCIManager getPref:@"no_suggested_reels"]) {
             if ([obj isKindOfClass:%c(IGFeedScrollableClipsModel)]) {
                 NSLog(@"[SCInsta] Hiding suggested reels: reels carousel");
 
                 [orig removeObjectAtIndex:idx];
+
+                return;
             }
         }
         
         // Remove suggested stories (carousel)
-        if (isFeed && [SCIManager removeSuggestedReels]) {
+        if (isFeed && [SCIManager getPref:@"no_suggested_reels"]) {
             if ([obj isKindOfClass:%c(IGInFeedStoriesTrayModel)]) {
                 NSLog(@"[SCInsta] Hiding suggested reels: stories carousel");
 
                 [orig removeObjectAtIndex:idx];
+
+                return;
             }
         }
         
         // Remove suggested for you (accounts)
-        if (isFeed && [SCIManager removeSuggestedAccounts]) {
+        if (isFeed && [SCIManager getPref:@"no_suggested_account"]) {
             if ([obj isKindOfClass:%c(IGHScrollAYMFModel)]) {
                 NSLog(@"[SCInsta] Hiding suggested for you");
 
                 [orig removeObjectAtIndex:idx];
+
+                return;
             }
         }
 
         // Remove suggested threads posts (carousel)
-        if (isFeed && [SCIManager removeSuggestedThreads]) {
+        if (isFeed && [SCIManager getPref:@"no_suggested_threads"]) {
             if ([obj isKindOfClass:%c(IGBloksFeedUnitModel)] || [obj isKindOfClass:objc_getClass("IGThreadsInFeedModels.IGThreadsInFeedModel")]) {
                 NSLog(@"[SCInsta] Hiding threads posts");
 
                 [orig removeObjectAtIndex:idx];
+
+                return;
+            }
+        }
+
+        // Remove story tray
+        if (isFeed && [SCIManager getPref:@"hide_stories_tray"]) {
+            if ([obj isKindOfClass:%c(IGStoryDataController)]) {
+                NSLog(@"[SCInsta] Hiding stories tray");
+
+                [orig removeObjectAtIndex:idx];
+
+                return;
+            }
+        }
+
+        // Hide entire feed
+        if ([SCIManager getPref:@"hide_entire_feed"]) {
+            if ([obj isKindOfClass:%c(IGPostCreationManager)] || [obj isKindOfClass:%c(IGMedia)] || [obj isKindOfClass:%c(IGEndOfFeedDemarcatorModel)] || [obj isKindOfClass:%c(IGSpinnerLabelViewModel)]) {
+                NSLog(@"[SCInsta] Hiding entire feed");
+
+                [orig removeObjectAtIndex:idx];
+
+                return;
             }
         }
 
         // Remove ads
-        if (([obj isKindOfClass:%c(IGFeedItem)] && ([obj isSponsored] || [obj isSponsoredApp])) || [obj isKindOfClass:%c(IGAdItem)]) {
-            NSLog(@"[SCInsta] Removing ads");
+        if ([SCIManager getPref:@"hide_ads"]) {
+            if (([obj isKindOfClass:%c(IGFeedItem)] && ([obj isSponsored] || [obj isSponsoredApp])) || [obj isKindOfClass:%c(IGAdItem)]) {
+                NSLog(@"[SCInsta] Removing ads");
 
-            [orig removeObjectAtIndex:idx];
+                [orig removeObjectAtIndex:idx];
+
+                return;
+            }
         }
     }];
 
@@ -67,17 +103,13 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 // Suggested posts
 %hook IGMainFeedListAdapterDataSource
 - (NSArray *)objectsForListAdapter:(id)arg1 {
-    if ([SCIManager hideAds]) {
-        return removeAdsItemsInList(%orig, YES);
-    }
-
-    return %orig;
+    return removeItemsInList(%orig, YES);
 }
 %end
 %hook IGContextualFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
-    if ([SCIManager hideAds]) {
-        return removeAdsItemsInList(%orig, NO);
+    if ([SCIManager getPref:@"hide_ads"]) {
+        return removeItemsInList(%orig, NO);
     }
 
     return %orig;
@@ -85,8 +117,8 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGVideoFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
-    if ([SCIManager hideAds]) {
-        return removeAdsItemsInList(%orig, NO);
+    if ([SCIManager getPref:@"hide_ads"]) {
+        return removeItemsInList(%orig, NO);
     }
 
     return %orig;
@@ -94,8 +126,8 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGChainingFeedViewController
 - (NSArray *)objectsForListAdapter:(id)arg1 {
-    if ([SCIManager hideAds]) {
-        return removeAdsItemsInList(%orig, NO);
+    if ([SCIManager getPref:@"hide_ads"]) {
+        return removeItemsInList(%orig, NO);
     }
 
     return %orig;
@@ -103,7 +135,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGStoryAdPool
 - (id)initWithUserSession:(id)arg1 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -114,7 +146,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGStoryAdsManager
 - (id)initWithUserSession:(id)arg1 storyViewerLoggingContext:(id)arg2 storyFullscreenSectionLoggingContext:(id)arg3 viewController:(id)arg4 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -125,7 +157,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGStoryAdsFetcher
 - (id)initWithUserSession:(id)arg1 delegate:(id)arg2 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -137,7 +169,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 // IG 148.0
 %hook IGStoryAdsResponseParser
 - (id)parsedObjectFromResponse:(id)arg1 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -146,7 +178,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 - (id)initWithReelStore:(id)arg1 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -157,7 +189,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGStoryAdsOptInTextView
 - (id)initWithBrandedContentStyledString:(id)arg1 sponsoredPostLabel:(id)arg2 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -168,7 +200,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 %end
 %hook IGSundialAdsResponseParser
 - (id)parsedObjectFromResponse:(id)arg1 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
 
         return nil;
@@ -177,7 +209,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
     return %orig;
 }
 - (id)initWithMediaStore:(id)arg1 userStore:(id)arg2 {
-    if ([SCIManager hideAds]) {
+    if ([SCIManager getPref:@"hide_ads"]) {
         NSLog(@"[SCInsta] Removing ads");
         
         return nil;
@@ -192,7 +224,7 @@ static NSArray *removeAdsItemsInList(NSArray *list, BOOL isFeed) {
 - (void)configureWithViewConfig:(id)arg1 {
     %orig;
 
-    if ([SCIManager removeSuggestedPost]) {
+    if ([SCIManager getPref:@"no_suggested_post"]) {
         NSLog(@"[SCInsta] Hiding end of feed message");
 
         // Hide suggested for you text

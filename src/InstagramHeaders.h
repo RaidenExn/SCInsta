@@ -89,6 +89,7 @@
 
 @interface IGFeedItemPagePhotoCell : UICollectionViewCell
 @property (nonatomic, strong) id post;
+@property (nonatomic, strong) IGPostItem *pagePhotoPost;
 @end
 
 @interface IGProfilePicturePreviewViewController : UIViewController
@@ -109,6 +110,9 @@
 @end
 
 @interface IGFeedItemPhotoCell : IGFeedItemMediaCell
+@end
+
+@interface IGFeedItemPhotoCellConfiguration : NSObject
 @end
 
 @interface IGFeedPhotoView : UIView
@@ -160,7 +164,6 @@
 @end
 
 @interface IGStoryVideoView : UIView<IGStoryPlayerMediaViewType>
-@property(retain, nonatomic) IGVideoPlayer *videoPlayer;
 @end
 
 @interface IGStoryFullscreenDefaultFooterView : UIView
@@ -326,7 +329,13 @@
 - (id)commandString;
 @end
 
+@interface IGGrowingTextView : UIView
+- (id)placeholderText;
+- (void)setPlaceholderText:(id)arg1;
+@end
 
+@interface IGUnifiedVideoCollectionView : UIScrollView
+@end
 
 
 

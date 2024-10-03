@@ -1,3 +1,5 @@
+#import "../../modules/JGProgressHUD/JGProgressHUD.h"
+#import "../InstagramHeaders.h"
 #import "SecurityViewController.h"
 
 @implementation SCISecurityViewController
@@ -38,13 +40,23 @@
                     [self dismissViewControllerAnimated:YES completion:nil];
 
                     NSLog(@"[SCInsta] Padlock authentication: Unlock success");
-                } else {
+                }
+                else {
                     NSLog(@"[SCInsta] Padlock authentication: Unlock failed");
                 }
             });
         }];
-    } else {
+    }
+    else {
         NSLog(@"[SCInsta] Padlock authentication: Device authentication not available");
+
+        // Notify user
+        JGProgressHUD *HUD = [[JGProgressHUD alloc] init];
+        HUD.textLabel.text = @"Authentication not available";
+        HUD.indicatorView = [[JGProgressHUDErrorIndicatorView alloc] init];
+
+        [HUD showInView:topMostController().view];
+        [HUD dismissAfterDelay:5.0];
     }
 }
 

@@ -90,6 +90,7 @@
             [self newSwitchCellWithTitle:@"Hide Meta AI" detailTitle:@"Hides the meta ai buttons within the app" key:@"hide_meta_ai" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"Copy description" detailTitle:@"Copy the post description with a long press" key:@"copy_description" defaultValue:true changeAction:nil],
             [self newSwitchCellWithTitle:@"Hide reels tab" detailTitle:@"Hides the reels tab on the bottom navbar" key:@"hide_reels_tab" defaultValue:false changeAction:nil],
+            [self newSwitchCellWithTitle:@"Disable scrolling reels" detailTitle:@"Prevents reels from being scrolled to the next video" key:@"disable_scrolling_reels" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"Do not save recent searches" detailTitle:@"Search bars will no longer save your recent searches" key:@"no_recent_searches" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"Hide explore posts grid" detailTitle:@"Hides the grid of suggested posts on the explore/search tab" key:@"hide_explore_grid" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"Hide trending searches" detailTitle:@"Hides the trending searches under the explore search bar" key:@"hide_trending_searches" defaultValue:true changeAction:nil],
@@ -99,6 +100,7 @@
             // Section 2: Feed
             [self newSectionWithTitle:@"Feed" footer:nil],
             [self newSwitchCellWithTitle:@"Hide ads" detailTitle:@"Removes all ads from the Instagram app" key:@"hide_ads" defaultValue:true changeAction:nil],
+            [self newSwitchCellWithTitle:@"Hide entire feed" detailTitle:@"Removes all content from your home feed, including posts" key:@"hide_entire_feed" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"Hide stories tray" detailTitle:@"Hides the story tray at the top and within your feed" key:@"hide_stories_tray" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"No suggested posts" detailTitle:@"Removes suggested posts from your feed" key:@"no_suggested_post" defaultValue:false changeAction:nil],
             [self newSwitchCellWithTitle:@"No suggested for you" detailTitle:@"Hides suggested accounts for you to follow" key:@"no_suggested_account" defaultValue:false changeAction:nil],

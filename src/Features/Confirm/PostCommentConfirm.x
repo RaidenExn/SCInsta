@@ -3,7 +3,7 @@
 
 %hook IGCommentComposer.IGCommentComposerController
 - (void)onSendButtonTap {
-    if ([SCIManager postCommentConfirmation]) {
+    if ([SCIManager getPref:@"post_comment_confirm"]) {
         NSLog(@"[SCInsta] Confirm post comment triggered");
 
         [SCIUtils showConfirmation:^(void) { %orig; }];

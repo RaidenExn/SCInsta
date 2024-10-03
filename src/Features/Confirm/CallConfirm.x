@@ -4,7 +4,7 @@
 %hook IGDirectThreadCallButtonsCoordinator
 // Voice Call
 - (void)_didTapAudioButton:(id)arg1 {
-    if ([SCIManager callConfirmation]) {
+    if ([SCIManager getPref:@"call_confirm"]) {
         NSLog(@"[SCInsta] Call confirm triggered");
 
         [SCIUtils showConfirmation:^(void) { %orig; }];
@@ -15,7 +15,7 @@
 
 // Video Call
 - (void)_didTapVideoButton:(id)arg1 {
-    if ([SCIManager callConfirmation]) {
+    if ([SCIManager getPref:@"call_confirm"]) {
         NSLog(@"[SCInsta] Call confirm triggered");
         
         [SCIUtils showConfirmation:^(void) { %orig; }];

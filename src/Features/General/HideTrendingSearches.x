@@ -6,7 +6,7 @@
     %orig;
 
     if ([[self delegate] isKindOfClass:%c(IGSearchTypeaheadNavigationHeaderView)]) {
-        if ([SCIManager hideTrendingSearches]) {
+        if ([SCIManager getPref:@"hide_trending_searches"]) {
             NSLog(@"[SCInsta] Hiding trending searches");
 
             [self removeFromSuperview];

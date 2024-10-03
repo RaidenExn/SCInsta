@@ -6,7 +6,7 @@
 - (id)viewModel {
     if ([[%orig title] isEqualToString:@"Suggested"]) {
 
-        if ([SCIManager noSuggestedChats]) {
+        if ([SCIManager getPref:@"no_suggested_chats"]) {
             NSLog(@"[SCInsta] Hiding suggested chats (header: channels tab)");
 
             return nil;
@@ -30,7 +30,7 @@
             
             // "Suggestions" header
             if ([[obj title] isEqualToString:@"Suggestions"]) {
-                if ([SCIManager hideMetaAI]) {
+                if ([SCIManager getPref:@"hide_meta_ai"]) {
                     NSLog(@"[SCInsta] Hiding suggested chats (header: messages tab)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -41,7 +41,7 @@
 
         // Suggested recipients
         if ([obj isKindOfClass:%c(IGDirectInboxSuggestedThreadCellViewModel)]) {
-            if ([SCIManager hideMetaAI]) {
+            if ([SCIManager getPref:@"hide_meta_ai"]) {
                 NSLog(@"[SCInsta] Hiding suggested chats (recipients: channels tab)");
 
                 [newObjs removeObjectAtIndex:idx];

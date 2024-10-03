@@ -7,7 +7,7 @@
 %property (nonatomic, strong) JGProgressHUD *hud;
 - (id)initWithFrame:(CGRect)arg1 {
     id orig = %orig;
-    if ([SCIManager downloadMedia]) {
+    if ([SCIManager getPref:@"dw_videos"]) {
         [orig addHandleLongPress];
     }
     return orig;
@@ -87,7 +87,7 @@
 %property (nonatomic, strong) JGProgressHUD *hud;
 - (id)initWithFrame:(CGRect)arg1 {
     id orig = %orig;
-    if ([SCIManager downloadMedia]) {
+    if ([SCIManager getPref:@"dw_videos"]) {
         [orig addHandleLongPress];
     }
     return orig;
@@ -183,7 +183,7 @@
 %property (nonatomic, strong) JGProgressHUD *hud;
 - (id)initWithFrame:(CGRect)arg1 {
     id orig = %orig;
-    if ([SCIManager downloadMedia]) {
+    if ([SCIManager getPref:@"dw_videos"]) {
         [orig addHandleLongPress];
     }
     return orig;

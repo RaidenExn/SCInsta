@@ -5,14 +5,14 @@
 %hook IGCoreTextView
 - (id)initWithWidth:(CGFloat)width {
     self = %orig;
-    if ([SCIManager copyDecription]) {
+    if ([SCIManager getPref:@"copy_description"]) {
         [self addHandleLongPress];
     }
     return self;
 }
 %new - (void)addHandleLongPress {
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
-    longPress.minimumPressDuration = 0.3;
+    longPress.minimumPressDuration = 0.5;
     [self addGestureRecognizer:longPress];
 }
 

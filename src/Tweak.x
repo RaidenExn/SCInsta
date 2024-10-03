@@ -12,16 +12,16 @@
 
 // Direct story & screenshot handlers
 
-#define VOID_HANDLESCREENSHOT(orig) [SCIManager noScreenShotAlert] ? nil : orig;
+#define VOID_HANDLESCREENSHOT(orig) [SCIManager getPref:@"remove_screenshot_alert"] ? nil : orig;
 #define NONVOID_HANDLESCREENSHOT(orig) return VOID_HANDLESCREENSHOT(orig)
 
-#define VOID_HANDLEREPLAY(orig) [SCIManager unlimitedReplay] ? nil : orig;
+#define VOID_HANDLEREPLAY(orig) [SCIManager getPref:@"unlimited_replay"] ? nil : orig;
 #define NONVOID_HANDLEREPLAY(orig) return VOID_HANDLEREPLAY(orig)
 
 ///////////////////////////////////////////////////////////
 
 // * Tweak version *
-NSString *SCIVersionString = @"v0.5.0";
+NSString *SCIVersionString = @"v0.6.0";
 
 // Variables that work across features
 BOOL seenButtonEnabled = false;
@@ -84,7 +84,7 @@ static BOOL isAuthenticationShowed = FALSE;
     %orig;
 
     // Padlock (biometric auth)
-    if ([SCIManager Padlock] && !isAuthenticationShowed) {
+    if ([SCIManager getPref:@"padlock"] && !isAuthenticationShowed) {
         UIViewController *rootController = [[self window] rootViewController];
         SCISecurityViewController *securityViewController = [SCISecurityViewController new];
         securityViewController.modalPresentationStyle = UIModalPresentationOverFullScreen;
@@ -143,7 +143,7 @@ static BOOL isAuthenticationShowed = FALSE;
 
             // Broadcast channels
             if ([[obj labelTitle] isEqualToString:@"Suggested channels"]) {
-                if ([SCIManager noSuggestedChats]) {
+                if ([SCIManager getPref:@"no_suggested_chats"]) {
                     NSLog(@"[SCInsta] Hiding suggested chats (header)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -152,7 +152,7 @@ static BOOL isAuthenticationShowed = FALSE;
 
             // Ask Meta AI
             else if ([[obj labelTitle] isEqualToString:@"Ask Meta AI"]) {
-                if ([SCIManager hideMetaAI]) {
+                if ([SCIManager getPref:@"hide_meta_ai"]) {
                     NSLog(@"[SCInsta] Hiding meta ai suggested chats (header)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -161,7 +161,7 @@ static BOOL isAuthenticationShowed = FALSE;
 
             // AI
             else if ([[obj labelTitle] isEqualToString:@"AI"]) {
-                if ([SCIManager hideMetaAI]) {
+                if ([SCIManager getPref:@"hide_meta_ai"]) {
                     NSLog(@"[SCInsta] Hiding ai suggested chats (header)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -176,7 +176,7 @@ static BOOL isAuthenticationShowed = FALSE;
          || [obj isKindOfClass:%c(IGDirectInboxSearchAIAgentsSuggestedPromptLoggingViewModel)]
         ) {
 
-            if ([SCIManager hideMetaAI]) {
+            if ([SCIManager getPref:@"hide_meta_ai"]) {
                 NSLog(@"[SCInsta] Hiding suggested chats (ai agents)");
 
                 [newObjs removeObjectAtIndex:idx];
@@ -189,7 +189,7 @@ static BOOL isAuthenticationShowed = FALSE;
 
             // Broadcast channels
             if ([[obj recipient] isBroadcastChannel]) {
-                if ([SCIManager noSuggestedChats]) {
+                if ([SCIManager getPref:@"no_suggested_chats"]) {
                     NSLog(@"[SCInsta] Hiding suggested chats (broadcast channels recipient)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -198,7 +198,7 @@ static BOOL isAuthenticationShowed = FALSE;
             
             // Meta AI (special section types)
             else if (([obj sectionType] == 20) || [obj sectionType] == 18) {
-                if ([SCIManager hideMetaAI]) {
+                if ([SCIManager getPref:@"hide_meta_ai"]) {
                     NSLog(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
 
                     [newObjs removeObjectAtIndex:idx];
@@ -207,12 +207,94 @@ static BOOL isAuthenticationShowed = FALSE;
 
             // Meta AI (catch-all)
             else if ([[[obj recipient] threadName] isEqualToString:@"Meta AI"]) {
-                if ([SCIManager hideMetaAI]) {
+                if ([SCIManager getPref:@"hide_meta_ai"]) {
                     NSLog(@"[SCInsta] Hiding meta ai suggested chats (meta ai recipient)");
 
                     [newObjs removeObjectAtIndex:idx];
                 }
             }
+        }
+
+    }];
+
+    return [newObjs copy];
+}
+%end
+
+// Explore page results
+%hook IGSearchListKitDataSource
+- (id)objectsForListAdapter:(id)arg1 {
+    NSMutableArray *newObjs = [%orig mutableCopy];
+
+    [newObjs enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        // Meta AI
+        if ([SCIManager getPref:@"hide_meta_ai"]) {
+
+            // Section header 
+            if ([obj isKindOfClass:%c(IGLabelItemViewModel)]) {
+
+                // "Ask Meta AI" search results header
+                if ([[obj labelTitle] isEqualToString:@"Ask Meta AI"]) {
+                    [newObjs removeObjectAtIndex:idx];
+                }
+
+            }
+
+            // Empty search bar upsell view
+            else if ([obj isKindOfClass:%c(IGSearchNullStateUpsellViewModel)]) {
+                [newObjs removeObjectAtIndex:idx];
+            }
+
+            // Meta AI search suggestions
+            else if ([obj isKindOfClass:%c(IGSearchResultNestedGroupViewModel)]) {
+                [newObjs removeObjectAtIndex:idx];
+            }
+
+            // Meta AI suggested search results
+            else if ([obj isKindOfClass:%c(IGSearchResultViewModel)]) {
+
+                // itemType 6 is meta ai suggestions
+                if ([obj itemType] == 6) {
+                    if ([SCIManager getPref:@"hide_meta_ai"]) {
+                        [newObjs removeObjectAtIndex:idx];
+                    }
+                    
+                }
+
+                // Meta AI user account in search results
+                else if ([[[obj title] string] isEqualToString:@"meta.ai"]) {
+                    if ([SCIManager getPref:@"hide_meta_ai"]) {
+                        [newObjs removeObjectAtIndex:idx];
+                    }
+                }
+
+            }
+            
+        }
+
+        // No suggested users
+        if ([SCIManager getPref:@"no_suggested_users"]) {
+
+            // Section header 
+            if ([obj isKindOfClass:%c(IGLabelItemViewModel)]) {
+
+                // "Suggested for you" search results header
+                if ([[obj labelTitle] isEqualToString:@"Suggested for you"]) {
+                    [newObjs removeObjectAtIndex:idx];
+                }
+
+            }
+
+            // Instagram users
+            else if ([obj isKindOfClass:%c(IGDiscoverPeopleItemConfiguration)]) {
+                [newObjs removeObjectAtIndex:idx];
+            }
+
+            // See all suggested users
+            else if ([obj isKindOfClass:%c(IGSeeAllItemConfiguration)]) {
+                [newObjs removeObjectAtIndex:idx];
+            }
+
         }
 
     }];
