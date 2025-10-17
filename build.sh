@@ -7,7 +7,7 @@ CMAKE_OSX_SYSROOT="iphoneos"
 
 # Prerequisites
 if [ -z "$(ls -A modules/FLEXing)" ]; then
-    echo -e '\033[1m\033[0;31mFLEXing submodule not found.\nPlease run the following command to checkout submodules:\n\n\033[0m    git submodule update --init --recursive'
+    echo -e '\033[1m\033[0;31mFLEXing submodule not found.\nPlease run the following command to checkout submodules:\n\n\033[0m   git submodule update --init --recursive'
     exit 1
 fi
 
@@ -48,10 +48,10 @@ then
     make clean
     rm -rf .theos
 
-    # Check for decrypted instagram ipa
-    ipaFile="$(find ./packages/*com.burbn.instagram*.ipa -type f -exec basename {} \;)"
-    if [ -z "${ipaFile}" ]; then
-        echo -e '\033[1m\033[0;31m./packages/com.burbn.instagram.ipa not found.\nPlease put a decrypted Instagram IPA in its path.\033[0m'
+    # Check for decrypted instagram ipa (now standardized by the workflow)
+    ipaFile="packages/instagram.ipa"
+    if [ ! -f "${ipaFile}" ]; then
+        echo -e '\033[1m\033[0;31m./packages/instagram.ipa not found.\nPlease ensure the workflow downloaded the IPA correctly or place it there manually.\033[0m'
         exit 1
     fi
 
@@ -67,7 +67,14 @@ then
     # Create IPA File
     echo -e '\033[1m\033[32mCreating the IPA file...\033[0m'
     rm -f packages/SCInsta-sideloaded.ipa
-    cyan -i "packages/${ipaFile}" -o packages/SCInsta-sideloaded.ipa -f .theos/obj/debug/SCInsta.dylib .theos/obj/debug/sideloadfix.dylib $FLEXPATH -c $COMPRESSION -m 15.0 -du
+
+    # MODIFIED LINE: Use APP_NAME and BUNDLE_ID environment variables with defaults for local building.
+    cyan -i "${ipaFile}" \
+         -o packages/SCInsta-sideloaded.ipa \
+         -n "${APP_NAME:-Instagram}" \
+         -b "${BUNDLE_ID:-com.burbn.instagram}" \
+         -f .theos/obj/debug/SCInsta.dylib .theos/obj/debug/sideloadfix.dylib $FLEXPATH \
+         -c $COMPRESSION -m 15.0 -du
     
     echo -e "\033[1m\033[32mDone, we hope you enjoy SCInsta!\033[0m\n\nYou can find the ipa file at: $(pwd)/packages"
 
