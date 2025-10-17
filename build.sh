@@ -37,46 +37,55 @@ check_submodules() {
     fi
 }
 
-# --- NEW: Function to remove selected plugins from the IPA ---
+# --- Function to remove plugins UNLESS specified to keep ---
 handle_plugins() {
     local original_ipa="packages/instagram.ipa"
     local temp_dir="packages/temp_unzip"
     
-    echo -e "${C_BLUE}Processing IPA plugins...${C_RESET}"
+    # All status messages are now redirected to stderr (>&2)
+    echo -e "${C_BLUE}Processing IPA plugins (removing all by default)...${C_RESET}" >&2
     
-    # Unzip the IPA quietly
     unzip -q "$original_ipa" -d "$temp_dir"
     
     local app_path="$temp_dir/Payload/Instagram.app"
     
-    # Conditionally remove plugins based on environment variables
-    if [ "${REMOVE_SHARE}" == "true" ]; then
-        echo "  - Removing Share Extension"
+    # Inverted logic: Remove if the KEEP variable is NOT true
+    if [ "${KEEP_SHARE}" != "true" ]; then
+        echo "  - Removing Share Extension" >&2
         rm -rf "${app_path}/Plugins/InstagramShareExtension.appex"
+    else
+        echo "  - ✅ Keeping Share Extension" >&2
     fi
-    if [ "${REMOVE_WIDGET}" == "true" ]; then
-        echo "  - Removing Widget Extension"
+
+    if [ "${KEEP_WIDGET}" != "true" ]; then
+        echo "  - Removing Widget Extension" >&2
         rm -rf "${app_path}/Plugins/InstagramWidgetExtension.appex"
+    else
+        echo "  - ✅ Keeping Widget Extension" >&2
     fi
-    if [ "${REMOVE_NOTIFICATION}" == "true" ]; then
-        echo "  - Removing Notification Extensions"
+
+    if [ "${KEEP_NOTIFICATION}" != "true" ]; then
+        echo "  - Removing Notification Extensions" >&2
         rm -rf "${app_path}/Plugins/InstagramNotificationContentExtension.appex"
         rm -rf "${app_path}/Plugins/InstagramNotificationExtension.appex"
+    else
+        echo "  - ✅ Keeping Notification Extensions" >&2
     fi
-    if [ "${REMOVE_LIVEACTIVITIES}" == "true" ]; then
-        echo "  - Removing Live Activities Extension"
+
+    if [ "${KEEP_LIVEACTIVITIES}" != "true" ]; then
+        echo "  - Removing Live Activities Extension" >&2
         rm -rf "${app_path}/Plugins/InstagramWidgetExtensionLiveActivities.appex"
+    else
+        echo "  - ✅ Keeping Live Activities Extension" >&2
     fi
     
-    echo -e "${C_BLUE}Re-packaging cleaned IPA...${C_RESET}"
+    echo -e "${C_BLUE}Re-packaging cleaned IPA...${C_RESET}" >&2
     
-    # Zip the contents back into a new IPA
     (cd "$temp_dir" && zip -qr "../instagram-cleaned.ipa" .)
     
-    # Clean up the temporary directory
     rm -rf "$temp_dir"
     
-    # Return the name of the new IPA file to be used by cyan
+    # This is the ONLY line that outputs to stdout, which is captured by the variable
     echo "packages/instagram-cleaned.ipa"
 }
 
@@ -94,17 +103,15 @@ case "$1" in
     sideload)
         clean_artifacts
         
-        # Check for original IPA
         if [ ! -f "packages/instagram.ipa" ]; then
-            echo -e "${C_BOLD}${C_RED}packages/instagram.ipa not found.${C_RESET}"
+            echo -e "${C_BOLD}${C_RED}packages/instagram.ipa not found.${C_RESET}" >&2
             exit 1
         fi
         
-        # --- MODIFIED: Call the plugin handler ---
-        # It will return the path to the (potentially modified) IPA
+        # This will return the path to the (potentially modified) IPA
         ipaFile=$(handle_plugins)
         
-        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for sideloading...${C_RESET}"
+        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for sideloading...${C_RESET}" >&2
         
         MAKEARGS='SIDELOAD=1'
         FLEXPATH='.theos/obj/debug/FLEXing.dylib .theos/obj/debug/libflex.dylib'
@@ -112,7 +119,7 @@ case "$1" in
 
         make $MAKEARGS
 
-        echo -e "${C_GREEN}Creating the final IPA file...${C_RESET}"
+        echo -e "${C_GREEN}Creating the final IPA file...${C_RESET}" >&2
         rm -f packages/SCInsta-sideloaded.ipa
         
         cyan -i "${ipaFile}" \
@@ -125,23 +132,23 @@ case "$1" in
 
     rootless)
         clean_artifacts
-        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for rootless...${C_RESET}"
+        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for rootless...${C_RESET}" >&2
         export THEOS_PACKAGE_SCHEME=rootless
         make package
         ;;
 
     rootful)
         clean_artifacts
-        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for rootful...${C_RESET}"
+        echo -e "${C_BOLD}${C_GREEN}Building SCInsta for rootful...${C_RESET}" >&2
         unset THEOS_PACKAGE_SCHEME
         make package
         ;;
 
     *)
-        echo -e "${C_RED}Error: Unknown build mode '$1'${C_RESET}\n"
+        echo -e "${C_RED}Error: Unknown build mode '$1'${C_RESET}\n" >&2
         show_usage
         exit 1
         ;;
 esac
 
-echo -e "\n${C_BOLD}${C_GREEN}Build finished successfully!${C_RESET}"
+echo -e "\n${C_BOLD}${C_GREEN}Build finished successfully!${C_RESET}" >&2
