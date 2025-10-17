@@ -50,7 +50,7 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
-      actions: read # Required for gh cache list
+      actions: read 
 
     steps:
       - name: Checkout Main
@@ -70,7 +70,6 @@ jobs:
       - name: Set PATH environment variable
         run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
 
-      # --- NEW: Step to find the latest cache if requested ---
       - name: Find Latest Cached IPA
         if: inputs.use_latest_cached_ipa == 'true'
         id: find_latest_cache
@@ -80,7 +79,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       
-      # --- NEW: Fail-safe step ---
       - name: Fail if no cache found when requested
         if: inputs.use_latest_cached_ipa == 'true' && steps.find_latest_cache.outputs.key == ''
         run: |
@@ -144,12 +142,10 @@ jobs:
           fi
           echo "IPA validation successful."
 
-      # --- NEW: Step to determine which IPA version is being used for naming ---
       - name: Determine IPA Version for Naming
         id: set_ipa_version
         run: |
           if [ "${{ inputs.use_latest_cached_ipa }}" == "true" ]; then
-            # Extract version from cache key: decrypted-ipa-v320.0-macos-latest -> 320.0
             VERSION=$(echo "${{ steps.find_latest_cache.outputs.key }}" | sed -E 's/decrypted-ipa-v([0-9.]+)-.*/\1/')
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           else
@@ -161,6 +157,12 @@ jobs:
         run: |
           SCINSTA_VERSION=$(awk '/Version:/ {print $2}' main/control)
           echo "version=${SCINSTA_VERSION}" >> "$GITHUB_OUTPUT"
+      
+      # --- NEW DEBUGGING STEP ---
+      - name: Debug Directory
+        run: |
+          echo "Checking contents of main/packages directory before build:"
+          ls -l ${{ github.workspace }}/main/packages
           
       - name: Build SCInsta tweak for sideloading (as IPA)
         run: |
