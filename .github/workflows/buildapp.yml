@@ -17,6 +17,22 @@ on:
         default: "com.burbn.instagram"
         required: true
         type: string
+      remove_share_extension:
+        description: "Remove Share Extension"
+        type: boolean
+        default: false
+      remove_widget_extension:
+        description: "Remove Widget Extension"
+        type: boolean
+        default: false
+      remove_notification_extension:
+        description: "Remove Notification Extension"
+        type: boolean
+        default: false
+      remove_liveactivities_extension:
+        description: "Remove Live Activities Extension"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,7 +55,7 @@ jobs:
       - name: Hide sensitive inputs
         uses: levibostian/action-hide-sensitive-inputs@v1
         with:
-          exclude_inputs: display_name,bundle_id
+          exclude_inputs: display_name,bundle_id,remove_share_extension,remove_widget_extension,remove_notification_extension,remove_liveactivities_extension
 
       - name: Install Dependencies
         run: brew install ldid dpkg make
@@ -109,6 +125,10 @@ jobs:
           THEOS: ${{ github.workspace }}/theos
           APP_NAME: ${{ inputs.display_name }}
           BUNDLE_ID: ${{ inputs.bundle_id }}
+          REMOVE_SHARE: ${{ inputs.remove_share_extension }}
+          REMOVE_WIDGET: ${{ inputs.remove_widget_extension }}
+          REMOVE_NOTIFICATION: ${{ inputs.remove_notification_extension }}
+          REMOVE_LIVEACTIVITIES: ${{ inputs.remove_liveactivities_extension }}
 
       - name: Prepare IPA for Release
         id: final_ipa
