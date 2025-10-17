@@ -3,10 +3,16 @@ name: Build and Package SCInsta
 on:
   workflow_dispatch:
     inputs:
+      use_latest_cached_ipa:
+        description: "✅ Use the most recently cached IPA (Ignores URL and Version below)"
+        type: boolean
+        default: false
       decrypted_instagram_url:
-        description: "The direct URL to the decrypted Instagram IPA"
-        required: true
-        type: string
+        description: "URL to IPA (Required only if not using latest cache)"
+        required: false
+      ipa_version:
+        description: "Version of IPA (Required only if not using latest cache)"
+        required: false
       display_name:
         description: "Custom App Name (e.g., SCInsta)"
         default: "Instagram"
@@ -44,6 +50,7 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
+      actions: read # Required for gh cache list
 
     steps:
       - name: Checkout Main
@@ -63,6 +70,23 @@ jobs:
       - name: Set PATH environment variable
         run: echo "$(brew --prefix make)/libexec/gnubin" >> $GITHUB_PATH
 
+      # --- NEW: Step to find the latest cache if requested ---
+      - name: Find Latest Cached IPA
+        if: inputs.use_latest_cached_ipa == 'true'
+        id: find_latest_cache
+        run: |
+          LATEST_KEY=$(gh cache list --key decrypted-ipa-v --sort created_at --order desc | head -n 1 | awk '{print $1}')
+          echo "key=$LATEST_KEY" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      
+      # --- NEW: Fail-safe step ---
+      - name: Fail if no cache found when requested
+        if: inputs.use_latest_cached_ipa == 'true' && steps.find_latest_cache.outputs.key == ''
+        run: |
+          echo "::error::'Use latest cache' was selected, but no cached IPAs were found."
+          exit 1
+          
       - name: Cache Theos
         id: theos-cache
         uses: actions/cache@v4
@@ -96,28 +120,51 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
 
+      - name: Restore or Save Decrypted IPA
+        id: ipa_cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/main/packages/instagram.ipa
+          key: ${{ inputs.use_latest_cached_ipa == 'true' && steps.find_latest_cache.outputs.key || format('decrypted-ipa-v{0}-{1}', inputs.ipa_version, runner.os) }}
+
       - name: Download and Validate Instagram IPA
+        if: steps.ipa_cache.outputs.cache-hit != 'true' && inputs.use_latest_cached_ipa == 'false'
         run: |
+          if [ -z "${{ inputs.decrypted_instagram_url }}" ]; then
+            echo "::error::IPA was not found in cache, and no download URL was provided."
+            exit 1
+          fi
           mkdir -p ${{ github.workspace }}/main/packages
           wget "${{ inputs.decrypted_instagram_url }}" --no-verbose -O "${{ github.workspace }}/main/packages/instagram.ipa"
           
           file_type=$(file --mime-type -b "${{ github.workspace }}/main/packages/instagram.ipa")
           if [[ "$file_type" != "application/x-ios-app" && "$file_type" != "application/zip" ]]; then
-            echo "::error::Validation failed: The downloaded file is not a valid IPA. Detected type: $file_type."
+            echo "::error::Validation failed: The downloaded file is not a valid IPA."
             exit 1
           fi
           echo "IPA validation successful."
+
+      # --- NEW: Step to determine which IPA version is being used for naming ---
+      - name: Determine IPA Version for Naming
+        id: set_ipa_version
+        run: |
+          if [ "${{ inputs.use_latest_cached_ipa }}" == "true" ]; then
+            # Extract version from cache key: decrypted-ipa-v320.0-macos-latest -> 320.0
+            VERSION=$(echo "${{ steps.find_latest_cache.outputs.key }}" | sed -E 's/decrypted-ipa-v([0-9.]+)-.*/\1/')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.ipa_version }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Get SCInsta Version
         id: scinsta_version
         run: |
           SCINSTA_VERSION=$(awk '/Version:/ {print $2}' main/control)
-          echo "SCINSTA_VERSION=${SCINSTA_VERSION}" >> "$GITHUB_ENV"
           echo "version=${SCINSTA_VERSION}" >> "$GITHUB_OUTPUT"
           
       - name: Build SCInsta tweak for sideloading (as IPA)
         run: |
-          pip install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
+          pip install --force-reinstall https://github.com/asdfzxcvbn/pyzle-rw/archive/main.zip
           
           cd main
           ./build.sh sideload
@@ -135,7 +182,7 @@ jobs:
         run: |
           cd main/packages
           LATEST_IPA=$(ls -t *.ipa | head -n1)
-          FINAL_NAME="SCInsta_v${{ steps.scinsta_version.outputs.version }}.ipa"
+          FINAL_NAME="SCInsta_v${{ steps.scinsta_version.outputs.version }}_i${{ steps.set_ipa_version.outputs.version }}.ipa"
           mv "$LATEST_IPA" "$FINAL_NAME"
           echo "path=${{ github.workspace }}/main/packages/${FINAL_NAME}" >> "$GITHUB_OUTPUT"
           echo "name=${FINAL_NAME}" >> "$GITHUB_OUTPUT"
@@ -144,7 +191,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: scinsta-${{ github.run_number }}
-          name: SCInsta v${{ steps.scinsta_version.outputs.version }} (Build #${{ github.run_number }})
+          name: SCInsta v${{ steps.scinsta_version.outputs.version }} (Instagram v${{ steps.set_ipa_version.outputs.version }})
           files: ${{ steps.final_ipa.outputs.path }}
           draft: true
           
