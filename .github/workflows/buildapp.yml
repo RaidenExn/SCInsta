@@ -33,6 +33,18 @@ on:
         description: "✅ Keep the Live Activities Extension"
         type: boolean
         default: false
+      keep_broadcast_extension:
+        description: "✅ Keep Broadcast Sample Handler"
+        type: boolean
+        default: false
+      keep_lockscreen_widget:
+        description: "✅ Keep Lock Screen Widget Control"
+        type: boolean
+        default: false
+      keep_lockscreen_camera_extension:
+        description: "✅ Keep Lock Screen Camera Extension"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,7 +67,7 @@ jobs:
       - name: Hide sensitive inputs
         uses: levibostian/action-hide-sensitive-inputs@v1
         with:
-          exclude_inputs: display_name,bundle_id,keep_share_extension,keep_widget_extension,keep_notification_extension,keep_liveactivities_extension
+          exclude_inputs: display_name,bundle_id,keep_share_extension,keep_widget_extension,keep_notification_extension,keep_liveactivities_extension,keep_broadcast_extension,keep_lockscreen_widget,keep_lockscreen_camera_extension
 
       - name: Install Dependencies
         run: brew install ldid dpkg make
@@ -135,6 +147,9 @@ jobs:
           KEEP_WIDGET: ${{ inputs.keep_widget_extension }}
           KEEP_NOTIFICATION: ${{ inputs.keep_notification_extension }}
           KEEP_LIVEACTIVITIES: ${{ inputs.keep_liveactivities_extension }}
+          KEEP_BROADCAST: ${{ inputs.keep_broadcast_extension }}
+          KEEP_LOCKSCREEN_WIDGET: ${{ inputs.keep_lockscreen_widget }}
+          KEEP_LOCKSCREEN_CAMERA: ${{ inputs.keep_lockscreen_camera_extension }}
 
       - name: Prepare IPA for Release
         id: final_ipa
