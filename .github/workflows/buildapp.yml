@@ -1,8 +1,3 @@
-# Inspired heavily by the following workflows
-# https://github.com/arichornlover/uYouEnhanced/blob/main/.github/workflows/buildapp.yml
-# https://github.com/ISnackable/YTCubePlus/blob/main/.github/workflows/Build.yml
-# https://github.com/BandarHL/BHTwitter/actions/workflows/build.yml
-
 name: Build and Package SCInsta
 
 on:
@@ -87,6 +82,7 @@ jobs:
 
       - name: Download and Validate Instagram IPA
         run: |
+          mkdir -p ${{ github.workspace }}/main/packages
           wget "${{ inputs.decrypted_instagram_url }}" --no-verbose -O "${{ github.workspace }}/main/packages/instagram.ipa"
           
           file_type=$(file --mime-type -b "${{ github.workspace }}/main/packages/instagram.ipa")
@@ -108,12 +104,9 @@ jobs:
           pip install --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
           
           cd main
-          # This build script needs to be able to accept the custom name and bundle ID.
-          # We are passing them as environment variables.
           ./build.sh sideload
         env:
           THEOS: ${{ github.workspace }}/theos
-          # IMPORTANT: Your build.sh must be updated to use these environment variables.
           APP_NAME: ${{ inputs.display_name }}
           BUNDLE_ID: ${{ inputs.bundle_id }}
 
@@ -121,7 +114,6 @@ jobs:
         id: final_ipa
         run: |
           cd main/packages
-          # Find the newest IPA file created by the build script
           LATEST_IPA=$(ls -t *.ipa | head -n1)
           FINAL_NAME="SCInsta_v${{ steps.scinsta_version.outputs.version }}.ipa"
           mv "$LATEST_IPA" "$FINAL_NAME"
