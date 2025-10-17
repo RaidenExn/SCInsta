@@ -42,7 +42,6 @@ handle_plugins() {
     local original_ipa="packages/instagram.ipa"
     local temp_dir="packages/temp_unzip"
     
-    # All status messages are now redirected to stderr (>&2)
     echo -e "${C_BLUE}Processing IPA plugins (removing all by default)...${C_RESET}" >&2
     
     unzip -q "$original_ipa" -d "$temp_dir"
@@ -78,6 +77,28 @@ handle_plugins() {
     else
         echo "  - ✅ Keeping Live Activities Extension" >&2
     fi
+
+    if [ "${KEEP_BROADCAST}" != "true" ]; then
+        echo "  - Removing Broadcast Extension" >&2
+        rm -rf "${app_path}/Plugins/InstagramBroadcastSampleHandlerExtension.appex"
+    else
+        echo "  - ✅ Keeping Broadcast Extension" >&2
+    fi
+
+    if [ "${KEEP_LOCKSCREEN_WIDGET}" != "true" ]; then
+        echo "  - Removing Lock Screen Widget" >&2
+        rm -rf "${app_path}/Plugins/InstagramWidgetExtensionLockScreenCameraControl.appex"
+    else
+        echo "  - ✅ Keeping Lock Screen Widget" >&2
+    fi
+    
+    # Note: This extension is in a different folder
+    if [ "${KEEP_LOCKSCREEN_CAMERA}" != "true" ]; then
+        echo "  - Removing Lock Screen Camera Extension" >&2
+        rm -rf "${app_path}/Extensions/InstagramExtensionLockScreenCamera.appex"
+    else
+        echo "  - ✅ Keeping Lock Screen Camera Extension" >&2
+    fi
     
     echo -e "${C_BLUE}Re-packaging cleaned IPA...${C_RESET}" >&2
     
@@ -85,7 +106,6 @@ handle_plugins() {
     
     rm -rf "$temp_dir"
     
-    # This is the ONLY line that outputs to stdout, which is captured by the variable
     echo "packages/instagram-cleaned.ipa"
 }
 
@@ -108,7 +128,6 @@ case "$1" in
             exit 1
         fi
         
-        # This will return the path to the (potentially modified) IPA
         ipaFile=$(handle_plugins)
         
         echo -e "${C_BOLD}${C_GREEN}Building SCInsta for sideloading...${C_RESET}" >&2
