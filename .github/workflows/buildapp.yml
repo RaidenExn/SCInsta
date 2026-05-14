@@ -1,8 +1,3 @@
-# Inspired heavily by the following workflows
-# https://github.com/arichornlover/uYouEnhanced/blob/main/.github/workflows/buildapp.yml
-# https://github.com/ISnackable/YTCubePlus/blob/main/.github/workflows/Build.yml
-# https://github.com/BandarHL/BHTwitter/actions/workflows/build.yml
-
 name: Build and Package SCInsta
 
 on:
@@ -18,10 +13,32 @@ on:
                 default: true
                 required: false
                 type: boolean
+            # --- NEW FORM INPUTS ---
+            ipa_name:
+                description: "App Name / Output IPA Name"
+                default: "Instagram"
+                required: false
+                type: string
+            package_name:
+                description: "Bundle ID / Package Name (Leave blank for default)"
+                default: ""
+                required: false
+                type: string
+            add_extensions:
+                description: "Keep App Extensions (PlugIns/Watch apps)"
+                default: false  # Unticked by default
+                required: false
+                type: boolean
+            keep_english_only:
+                description: "Remove all language files except English"
+                default: true   # Ticked by default
+                required: false
+                type: boolean
   
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
+
 jobs:
     build:
         name: Build SCInsta
@@ -71,12 +88,47 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
-            - name: Prepare Instagram IPA
+            - name: Prepare and Pre-process Instagram IPA
               run: |
                 cd main
 
                 mkdir -p packages
                 wget "$Instagram_URL" --no-verbose -O packages/com.burbn.instagram.ipa
+
+                # --- NEW PRE-PROCESSING LOGIC ---
+                cd packages
+                unzip -q com.burbn.instagram.ipa -d extracted_ipa
+
+                if [ "${{ inputs.add_extensions }}" = "false" ]; then
+                  echo "Removing App Extensions to prevent signing issues..."
+                  rm -rf extracted_ipa/Payload/*.app/PlugIns
+                  rm -rf extracted_ipa/Payload/*.app/Watch
+                  rm -rf extracted_ipa/Payload/*.app/com.apple.WatchPlaceholder
+                fi
+
+                if [ "${{ inputs.keep_english_only }}" = "true" ]; then
+                  echo "Removing non-English language files to reduce size..."
+                  find extracted_ipa/Payload/*.app -name "*.lproj" -type d ! -name "en.lproj" ! -name "Base.lproj" -exec rm -rf {} +
+                fi
+
+                if [ -n "${{ inputs.package_name }}" ]; then
+                  echo "Modifying Bundle Identifier to ${{ inputs.package_name }}..."
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${{ inputs.package_name }}" extracted_ipa/Payload/*.app/Info.plist || true
+                fi
+
+                if [ "${{ inputs.ipa_name }}" != "Instagram" ]; then
+                  echo "Modifying App Display Name to ${{ inputs.ipa_name }}..."
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${{ inputs.ipa_name }}" extracted_ipa/Payload/*.app/Info.plist || true
+                  /usr/libexec/PlistBuddy -c "Set :CFBundleName ${{ inputs.ipa_name }}" extracted_ipa/Payload/*.app/Info.plist || true
+                fi
+
+                # Repackage into the exact file name build.sh expects
+                cd extracted_ipa
+                zip -qr ../com.burbn.instagram.ipa Payload
+                cd ..
+                rm -rf extracted_ipa
+                cd ..
+                # --------------------------------
 
                 ls -la packages
                 
@@ -88,7 +140,6 @@ jobs:
               id: scinsta_version
               run: |
                 SCINSTA_VERSION=$(awk '/Version:/ {print $2}' main/control)
-
                 echo "SCINSTA_VERSION=${SCINSTA_VERSION}" >> "$GITHUB_ENV"
                 echo "version=${SCINSTA_VERSION}" >> "$GITHUB_OUTPUT"
             
@@ -108,29 +159,31 @@ jobs:
               env:
                 THEOS: ${{ github.workspace }}/theos
 
-            - name: Rename IPA to include version info
+            - name: Rename IPA to include custom name and version
               run: |
                 cd main/packages
-                mv "$(ls -t | head -n1)" "SCInsta_sideloaded_v${SCINSTA_VERSION}.ipa"
+                # Changed to reflect the custom IPA name input
+                mv "$(ls -t | head -n1)" "${{ inputs.ipa_name }}_sideloaded_v${SCINSTA_VERSION}.ipa"
 
             - name: Pass package name to upload action
               id: package_name
               run: |
-                echo "package=$(ls -t main/packages |  head -n1)" >> "$GITHUB_OUTPUT"
+                echo "package=$(ls -t main/packages | head -n1)" >> "$GITHUB_OUTPUT"
 
             - name: Upload Artifact
               if: ${{ inputs.upload_artifact }}
               uses: actions/upload-artifact@v4
               with:
-                name: SCInsta_sideloaded_v${{ steps.scinsta_version.outputs.version }}
+                # Dynamically uses the custom name
+                name: ${{ inputs.ipa_name }}_sideloaded_v${{ steps.scinsta_version.outputs.version }}
                 path: ${{ github.workspace }}/main/packages/${{ steps.package_name.outputs.package }}
                 if-no-files-found: error
 
             - name: Create Release
               uses: softprops/action-gh-release@v2.0.6
               with:
-                name: SCInsta_sideloaded_v${{ steps.scinsta_version.outputs.version }}
-                files: ${{ github.workspace }}/main/packages/SCInsta_sideloaded_v*.ipa
+                name: ${{ inputs.ipa_name }} Sideloaded v${{ steps.scinsta_version.outputs.version }}
+                files: ${{ github.workspace }}/main/packages/*.ipa
                 draft: true
 
             - name: Output Release URL
